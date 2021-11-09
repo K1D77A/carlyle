@@ -6,7 +6,7 @@
 (defclass caryle-app (ningle:app)
   ())
 
-(defmethod ningle:not-found ((app my-app))
+(defmethod ningle:not-found ((app carlyle-app))
   (call-next-method)
   (compose-condition (make-condition 'not-found) nil))
 
