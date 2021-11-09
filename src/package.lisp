@@ -42,9 +42,9 @@
    ;;json
    #:post-process-json
 
-   ;;api-protocol
+   ;;bearer
    #:find-bearer-token
-
+   ;;api-protocol
    #:request
 
    #:with-body
