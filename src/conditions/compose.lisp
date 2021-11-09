@@ -1,4 +1,4 @@
-(in-package #:blue-sky-foundation-events)
+(in-package #:carlyle)
 
 (defmethod compose-condition/recover append ((condition bad-request) request &rest args)
   (declare (ignore args))

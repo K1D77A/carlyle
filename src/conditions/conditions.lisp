@@ -1,18 +1,18 @@
 (in-package #:carlyle)
 
-(define-condition caryle-condition (simple-error)
+(define-condition carlyle-condition (simple-error)
   ()
   (:documentation "Top level condition for all bsfe related conditions."))
 
-(define-condition api-condition (bsfe-condition)
+(define-condition api-condition (carlyle-condition)
   ((http-status-code 
     :reader http-status-code
     :initarg :http-status-code
     :initform 500)
    (category
-       :reader category
-       :initarg :category
-       :initform "INTERNAL-SERVER-ERROR")
+    :reader category
+    :initarg :category
+    :initform "INTERNAL-SERVER-ERROR")
    (description
     :reader description
     :initarg :description
@@ -30,23 +30,15 @@
   ((http-status-code
     :initform 404)
    (category
-       :initform "NOT-FOUND")
+    :initform "NOT-FOUND")
    (description
     :initform "Entity not found")))
-
-(define-condition not-found%event (not-found)
-  ((description
-    :initform "Event not found")))
-
-(define-condition not-found%product (not-found)
-  ((description
-    :initform "Product not found")))
 
 (define-condition bad-request (api-condition)
   ((http-status-code
     :initform 400)
    (category
-       :initform "BAD-REQUEST")))
+    :initform "BAD-REQUEST")))
 
 (define-condition malformed-json (bad-request)
   ((description

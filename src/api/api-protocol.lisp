@@ -1,4 +1,4 @@
-(in-package #:caryle)
+(in-package #:carlyle)
 
 (defclass request ()
   ())
@@ -72,7 +72,6 @@
                                 `(post-process-body (locally ,@body)
                                                     ,post-process-way ,params))))
                    (condition (c)
-                     (log:error c)
                      (process-condition c ningle:*request* ningle:*response*))))))))
   )
 

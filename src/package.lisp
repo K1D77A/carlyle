@@ -43,6 +43,7 @@
    #:post-process-json
 
    ;;api-protocol
+   #:find-bearer-token
 
    #:request
 

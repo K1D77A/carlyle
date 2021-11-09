@@ -1,4 +1,4 @@
-(in-package #:caryle)
+(in-package #:carlyle)
 
 #||
 This file contains the code for a protocol that generates the response JSON.

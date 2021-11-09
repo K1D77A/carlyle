@@ -1,4 +1,4 @@
-(in-package #:caryle)
+(in-package #:carlyle)
 
 #||
 This file contains the code for handling a variety of conditions signalled that require 
