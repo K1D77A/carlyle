@@ -51,6 +51,20 @@ automatically on receipt. If it fails then a condition is signalled and this is 
 ```
 ### Authorization 
 Auth apis like those defined with def-auth-api%.. require an Authorization header which contains a valid bearer token, this uses a method called `find-bearer-token` and accepts a single argument, the token extracted from within the header.
+
+Carlyle provides no default routes for handling authentication and the creation/destruction of authorization tokens, you have to handle this yourself, here is an example:
+```lisp
+(def-no-auth-api%post ("/v1/login" params json :jojo)
+  (safe-destructure-keys (|username| |password|)
+      json
+    (let ((user (find-user |username|)))
+      (if (and user (valid-password-p user |password|))
+          (new-bearer-token user)
+          (error 'forbidden)))))
+```
+`safe-destructure-keys` is like destructure-bind except it makes sure that all the keys listed in the args list are non nil.
+
+
 ### Adding conditions
 When you want to add a new condition you just choose a superclass listed in src/conditions/conditions.lisp and then create a subclass of this, set the description and then add a `compose-condition/recover` entry as listed in src/conditions/compose.lisp and then signal this condition within the body of your defapi.
 
@@ -76,6 +90,8 @@ query parameters to the result after the execution of the body.
   (jojo:to-json result))
 ```
 The :around method also appends the CRC header to your response headers.
+
+
 
 
 ## License
