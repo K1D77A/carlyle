@@ -48,10 +48,11 @@
             :when (char= (aref str 0) #\:)
               :collect (intern (string-upcase (subseq str 1))))))
 
-  (defmacro defapi ((method url requires-auth-p) (params json post-process-way) &body body)
+  (defmacro defapi (app (method url requires-auth-p)
+                    (params json post-process-way) &body body)
     (let ((args (extract-args-from-url url)))
       (alexandria:with-gensyms (obj)
-        `(setf (ningle:route *app* ,url :method ,method)
+        `(setf (ningle:route ,app ,url :method ,method)
                (lambda (,params)
                  (handler-case
                      (let ((,obj (make-instance (%method->object ,method))))
@@ -75,29 +76,29 @@
                      (process-condition c ningle:*request* ningle:*response*))))))))
   )
 
-(defmacro defapi%no-json ((method url requires-auth-p)
+(defmacro defapi%no-json (app (method url requires-auth-p)
                           (params post-process-way) &body body)
-  `(defapi (,method ,url ,requires-auth-p) (,params nil ,post-process-way)
+  `(defapi ,app (,method ,url ,requires-auth-p) (,params nil ,post-process-way)
      ,@body))
 
-(defmacro def-auth-api%get ((url params post-process-way) &body body)
-  `(defapi%no-json (:GET ,url t) (,params ,post-process-way)
+(defmacro def-auth-api%get (app (url params post-process-way) &body body)
+  `(defapi%no-json ,app (:GET ,url t) (,params ,post-process-way)
      ,@body))
 
-(defmacro def-no-auth-api%get ((url params post-process-way) &body body)
-  `(defapi%no-json (:GET ,url nil) (,params ,post-process-way)
+(defmacro def-no-auth-api%get (app (url params post-process-way) &body body)
+  `(defapi%no-json ,app (:GET ,url nil) (,params ,post-process-way)
      ,@body))
 
-(defmacro def-auth-api%post ((url params json post-process-way) &body body)
-  `(defapi (:POST ,url t) (,params ,json ,post-process-way)
+(defmacro def-auth-api%post (app (url params json post-process-way) &body body)
+  `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way)
      ,@body))
 
-(defmacro def-no-auth-api%post ((url params json post-process-way) &body body)
-  `(defapi (:POST ,url nil) (,params ,json ,post-process-way)
+(defmacro def-no-auth-api%post (app (url params json post-process-way) &body body)
+  `(defapi ,app (:POST ,url nil) (,params ,json ,post-process-way)
      ,@body))
 
-(defmacro def-auth-api%delete ((url params post-process-way) &body body)
-  `(defapi%no-json (:DELETE ,url t) (,params ,post-process-way)
+(defmacro def-auth-api%delete (app (url params post-process-way) &body body)
+  `(defapi%no-json ,app (:DELETE ,url t) (,params ,post-process-way)
      ,@body))
 
 (defgeneric verify-api-request (request-obj ningle-request requires-auth))

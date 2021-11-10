@@ -78,8 +78,8 @@
    ;;encryption.lisp
    #:crc32
 
-   ;;caryle.lisp
-   #:caryle-app
+   ;;carlyle.lisp
+   #:carlyle-app
 
    #:safe-destructure-keys))
    

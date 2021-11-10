@@ -1,9 +1,7 @@
 ;;;; carlyle.lisp
 
 (in-package #:carlyle)
-
-
-(defclass caryle-app (ningle:app)
+(defclass carlyle-app (ningle:app)
   ())
 
 (defmethod ningle:not-found ((app carlyle-app))
