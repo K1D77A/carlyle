@@ -68,6 +68,24 @@ Carlyle provides no default routes for handling authentication and the creation/
 ### Adding conditions
 When you want to add a new condition you just choose a superclass listed in src/conditions/conditions.lisp and then create a subclass of this, set the description and then add a `compose-condition/recover` entry as listed in src/conditions/compose.lisp and then signal this condition within the body of your defapi.
 
+```lisp
+(define-condition not-found%event (carlyle:not-found)
+  ((description :initform "Event not found")))
+
+(defmethod carlyle:compose-condition/recover append ((con not-found%event) req &rest args)
+  (declare (ignore args))
+  `(("high" . "Correct your event id.")))
+
+(define-condition not-found%product (carlyle:not-found)
+  ((description :initform "Product not found")))
+
+(defmethod carlyle:compose-condition/recover append ((con not-found%product) req &rest args)
+  (declare (ignore args))
+  `(("high" . "Correct your product id.")))
+```
+
+Remember that the compose-condition/recover method uses the method combination APPEND.
+
 ### Validating types
 Within the url of the examples you can see in the example section there are keywords like
 `:event-id` when Carlyle encounters a variable like that within the URL then it automatically url decodes this and produces a variable within the body of your api by that name, however it also verifies the type of the argument, this is done using a method called `verify-param` which takes a keyword and a val, the keyword is parsed by Ningle, this is a means of determining what type of argument is expected, you can see from the code below that verify-param :user-id checks if val is of type 't%user-id, and t%user-id is a string that starts with !. 
