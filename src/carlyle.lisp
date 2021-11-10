@@ -6,6 +6,9 @@
 
 (defmethod ningle:not-found ((app carlyle-app))
   (call-next-method)
+  (setf (lack.response:response-headers ningle:*response*)
+        (append (lack.response:response-headers ningle:*response*)
+                (list :content-type "application/json")))
   (compose-condition (make-condition 'not-found) nil))
 
 (defmacro safe-destructure-keys (keys list &body body)
