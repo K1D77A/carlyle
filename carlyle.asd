@@ -17,7 +17,7 @@
   :pathname "src"
   :components ((:file "package")
                (:file "encryption")
-               (:file "bearer")
+               (:file "bearers")
                (:module "conditions"
                 :serial t
                 :components ((:file "conditions")
