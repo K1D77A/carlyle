@@ -18,13 +18,13 @@ Done.
 ## An example
 
 ```lisp
-(def-no-auth-api%get ("/v1/events/:event-id" params :jojo)
+(def-no-auth-api%get *app* ("/v1/events/:event-id" params :jojo)
   (find-event event-id))
 
 (defun %test-get-event-id (id)
   (test-get (format nil "v1/events/~A" (quri:url-encode id))))
 
-(def-no-auth-api%get ("/v1/events" params :jojo-list)
+(def-no-auth-api%get *app* ("/v1/events" params :jojo-list)
   (sort (alexandria:hash-table-values *events*)
         #'local-time:timestamp< :key #'start-date))
 ```
@@ -54,7 +54,7 @@ Auth apis like those defined with def-auth-api%.. require an Authorization heade
 
 Carlyle provides no default routes for handling authentication and the creation/destruction of authorization tokens, you have to handle this yourself, here is an example:
 ```lisp
-(def-no-auth-api%post ("/v1/login" params json :jojo)
+(def-no-auth-api%post *app* ("/v1/login" params json :jojo)
   (safe-destructure-keys (|username| |password|)
       json
     (let ((user (find-user |username|)))
