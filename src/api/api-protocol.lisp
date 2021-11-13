@@ -58,20 +58,21 @@
                      (let ((,obj (make-instance (%method->object ,method))))
                        (set-response-headers ningle:*response*)
                        (verify-parameters ,params)
-                       (verify-api-request ,obj ningle:*request* ,requires-auth-p)
                        ,(if json 
-                            `(let ((,json (jojo:parse
-                                           (babel:octets-to-string
-                                            (%request-raw-body ningle:*request*)))))
+                            `(let ((,json
+                                     (verify-api-request ,obj ningle:*request*
+                                                         ,requires-auth-p)))
                                (declare (ignorable ,json))
                                ,(if args
                                     `(args-to-let ,args ,params ,post-process-way ,@body)
                                     `(post-process-body (locally ,@body) ,post-process-way
                                                         ,params)))
-                            (if args
-                                `(args-to-let ,args ,params ,post-process-way ,@body)
-                                `(post-process-body (locally ,@body)
-                                                    ,post-process-way ,params))))
+                            `(progn
+                               (verify-api-request ,obj ningle:*request* ,requires-auth-p)
+                               ,(if args
+                                    `(args-to-let ,args ,params ,post-process-way ,@body)
+                                    `(post-process-body (locally ,@body)
+                                                        ,post-process-way ,params)))))
                    (condition (c)
                      (process-condition c ningle:*request* ningle:*response*))))))))
   )
@@ -104,14 +105,16 @@
 (defgeneric verify-api-request (request-obj ningle-request requires-auth))
 
 (defmethod verify-api-request ((obj with-body) req (req-auth t))
+  (validate-bearer req)
+  (check-authorization req)
   (let ((raw-body (%request-raw-body req)))
     (validate-crc req raw-body)
-    (validate-bearer req)
-    (check-authorization req)))
+    raw-body))
 
 (defmethod verify-api-request ((obj with-body) req (req-auth null))
   (let ((raw-body (%request-raw-body req)))
-    (validate-crc req raw-body)))
+    (validate-crc req raw-body)
+    raw-body))
 
 (defmethod verify-api-request ((obj without-body) req (req-auth t))
   (validate-bearer req)

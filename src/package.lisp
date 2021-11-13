@@ -24,6 +24,8 @@
 
    #:bad-crc
 
+   #:expired-bearer-token
+
    #:no-bearer-token
 
    #:forbidden

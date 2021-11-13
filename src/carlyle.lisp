@@ -22,6 +22,7 @@ each of these KEYS has to have a non nil value otherwise signals 'malformed-json
             keys)
        (locally ,@body))))
 
-
-
+(defun http-body:parse (content-type content-length raw-body)
+  (declare (ignore content-type content-length raw-body))
+  nil)
 
