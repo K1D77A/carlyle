@@ -52,6 +52,17 @@ automatically on receipt. If it fails then a condition is signalled and this is 
 ### Authorization 
 Auth apis like those defined with def-auth-api%.. require an Authorization header which contains a valid bearer token, this uses a method called `find-bearer-token` and accepts a single argument, the token extracted from within the header.
 
+```lisp
+(defmethod carlyle:find-bearer-token ((token string))
+  (find-bearer token))
+
+(defun carlyle:validate-bearer-token (plist)
+  (destructuring-bind (&key bearer &allow-other-keys)
+      plist 
+    (check-if-token-has-expired bearer)))
+
+```
+
 Carlyle provides no default routes for handling authentication and the creation/destruction of authorization tokens, you have to handle this yourself, here is an example:
 ```lisp
 (def-no-auth-api%post *app* ("/v1/login" params json :jojo)
