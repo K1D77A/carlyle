@@ -133,7 +133,7 @@ the CRC provided."
     (check-valid-crc crc-header raw-body)))
 
 (defun validate-bearer (request)
-  (or (req-header "Authorization" request)
+  (or (req-header "authorization" request)
       (error 'no-bearer-token)))
 
 (defun check-authorization (request)
@@ -143,7 +143,7 @@ the existence of this header was validated before hand. If the token is not foun
   (let* ((bearer (req-header "authorization" request))
          (token (second (str:split #\Space bearer)))
          (found? (find-bearer-token token)))
-    (check-if-token-has-expired found?)))
+    (validate-bearer-token found?)))
 
 (defun set-response-headers (response)
   (setf (lack.response:response-headers response)

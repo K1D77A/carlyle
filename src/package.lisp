@@ -44,6 +44,8 @@
 
    ;;bearer
    #:find-bearer-token
+
+   #:validate-bearer-token
    ;;api-protocol
    #:request
 
