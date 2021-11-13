@@ -60,8 +60,10 @@
                        (verify-parameters ,params)
                        ,(if json 
                             `(let ((,json
-                                     (verify-api-request ,obj ningle:*request*
-                                                         ,requires-auth-p)))
+                                     (jojo:parse
+                                      (babel:octets-to-string 
+                                       (verify-api-request ,obj ningle:*request*
+                                                           ,requires-auth-p)))))
                                (declare (ignorable ,json))
                                ,(if args
                                     `(args-to-let ,args ,params ,post-process-way ,@body)
