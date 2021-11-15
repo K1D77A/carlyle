@@ -63,7 +63,8 @@
                                      (jojo:parse
                                       (babel:octets-to-string 
                                        (verify-api-request ,obj ningle:*request*
-                                                           ,requires-auth-p)))))
+                                                           ,requires-auth-p))
+                                      :as :hash-table)))
                                (declare (ignorable ,json))
                                ,(if args
                                     `(args-to-let ,args ,params ,post-process-way ,@body)
