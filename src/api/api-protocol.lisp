@@ -55,7 +55,7 @@
         `(setf (ningle:route ,app ,url :method ,method)
                (lambda (,params)
                  (handler-case
-                     (let ((,obj (make-instance (%method->object ,method))))
+                     (let ((,obj (make-instance ',(%method->object method))))
                        (set-response-headers ningle:*response*)
                        (verify-parameters ,params)
                        ,(if json 
