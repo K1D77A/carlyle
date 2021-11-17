@@ -73,14 +73,14 @@ recover: {
      ("category" . "INTERNAL-SERVER-ERROR"))))
 
 (defgeneric compose-condition/info (condition request &rest args)
-  (:documentation "Compose the info aspects of the condition using the APPEND method.")
-  (:method-combination append :most-specific-last))
+  (:documentation "Compose the info aspects of the condition using the APPEND method."))
+;;  (:method-combination append :most-specific-first))
 
 (defmethod compose-condition/info :around (condition request &rest args)
   (declare (ignore args))
   (%compose-quick-hash (call-next-method)))
 
-(defmethod compose-condition/info append (condition request &rest args)
+(defmethod compose-condition/info (condition request &rest args)
   (declare (ignore args))
   `(("description" . ,(description condition))))
 
