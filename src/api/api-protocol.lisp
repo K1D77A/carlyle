@@ -21,6 +21,9 @@
 (defclass post-request (with-body)
   ())
 
+(defclass post-request%no-body (without-body)
+  ())
+
 (defclass patch-request (with-body)
   ())
 
@@ -30,7 +33,13 @@
     (:DELETE 'delete-request)
     (:PUT 'put-request)
     (:POST 'post-request)
-    (:PATCH 'patch-request)))
+    (:PATCH 'patch-request)
+    (:POST%NO-BODY 'post-request%no-body)))
+
+(defun method-transfomer (method)
+  (case method
+    (:POST%NO-BODY :POST)
+    (otherwise method)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defmacro args-to-let (args params way &body body)
@@ -49,10 +58,12 @@
               :collect (intern (string-upcase (subseq str 1))))))
 
   (defmacro defapi (app (method url requires-auth-p)
-                    (params json post-process-way) &body body)
+                    (params json post-process-way
+                     &key (parse-type 'hash-table))
+                    &body body)
     (let ((args (extract-args-from-url url)))
       (alexandria:with-gensyms (obj)
-        `(setf (ningle:route ,app ,url :method ,method)
+        `(setf (ningle:route ,app ,url :method ,(method-transfomer method))
                (lambda (,params)
                  (handler-case
                      (let ((,obj (make-instance ',(%method->object method))))
@@ -65,7 +76,9 @@
                                        (verify-api-request ,obj ningle:*request*
                                                            ,requires-auth-p))
                                       :as :hash-table)))
-                               (declare (ignorable ,json))
+                               (when ,json
+                                 (unless (typep ,json ',parse-type)
+                                   (error 'malformed-json)))
                                ,(if args
                                     `(args-to-let ,args ,params ,post-process-way ,@body)
                                     `(post-process-body (locally ,@body) ,post-process-way
@@ -81,27 +94,33 @@
   )
 
 (defmacro defapi%no-json (app (method url requires-auth-p)
-                          (params post-process-way) &body body)
+                          (params post-process-way
+                           &key (parse-type 'hash-table)) &body body)
   `(defapi ,app (,method ,url ,requires-auth-p) (,params nil ,post-process-way)
-     ,@body))
+       ,@body))
 
-(defmacro def-auth-api%get (app (url params post-process-way) &body body)
+(defmacro def-auth-api%get (app (url params post-process-way
+                                 &key (parse-type 'hash-table)) &body body)
   `(defapi%no-json ,app (:GET ,url t) (,params ,post-process-way)
      ,@body))
 
-(defmacro def-no-auth-api%get (app (url params post-process-way) &body body)
+(defmacro def-no-auth-api%get (app (url params post-process-way
+                                    &key (parse-type 'hash-table)) &body body)
   `(defapi%no-json ,app (:GET ,url nil) (,params ,post-process-way)
      ,@body))
 
-(defmacro def-auth-api%post (app (url params json post-process-way) &body body)
+(defmacro def-auth-api%post (app (url params json post-process-way
+                                  &key (parse-type 'hash-table)) &body body)
   `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way)
-     ,@body))
+       ,@body))
 
-(defmacro def-no-auth-api%post (app (url params json post-process-way) &body body)
+(defmacro def-no-auth-api%post (app (url params json post-process-way
+                                     &key (parse-type 'hash-table)) &body body)
   `(defapi ,app (:POST ,url nil) (,params ,json ,post-process-way)
-     ,@body))
+       ,@body))
 
-(defmacro def-auth-api%delete (app (url params post-process-way) &body body)
+(defmacro def-auth-api%delete (app (url params post-process-way
+                                    &key (parse-type 'hash-table)) &body body)
   `(defapi%no-json ,app (:DELETE ,url t) (,params ,post-process-way)
      ,@body))
 
