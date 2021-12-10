@@ -50,16 +50,19 @@ automatically on receipt. If it fails then a condition is signalled and this is 
 { "error": { "code": 400, "category": "BAD-REQUEST" }, "info": { "description": "Bearer token is missing for a request that requires authorization." }, "recover": { "high": "Append authorization header", "low": "Resend request." } }
 ```
 ### Authorization 
-Auth apis like those defined with def-auth-api%.. require an Authorization header which contains a valid bearer token, this uses a method called `find-bearer-token` and accepts a single argument, the token extracted from within the header.
+Auth apis like those defined with def-auth-api%.. require an Authorization header which contains a valid bearer token, this uses a method called `find-bearer-token` and accepts two arguments, the token extracted from within the header, and the value of the key :bearer-verifier-args provided to the defapi macro. This is so you can modify how you verify a token, you can build varying authentication mechanisms.
 
 ```lisp
-(defmethod carlyle:find-bearer-token ((token string))
-  (find-bearer token))
+(defmethod find-bearer ((token bearer-token) where)
+  token)
 
-(defun carlyle:validate-bearer-token (plist)
-  (destructuring-bind (&key bearer &allow-other-keys)
-      plist 
-    (check-if-token-has-expired bearer)))
+(defmethod carlyle:find-bearer-token ((token string) args)
+  (if args 
+      (apply #'find-bearer token args)
+      (find-bearer token :session)))
+
+(defmethod carlyle:find-bearer-token ((token null) args)
+  (error 'malformed-bearer-token))
 
 ```
 

@@ -1,5 +1,8 @@
 (in-package #:carlyle)
 
+(defparameter *objects* ()
+  "List of premade objects to compute the correct course of validation.")
+
 (defclass request ()
   ())
 
@@ -24,7 +27,7 @@
 (defclass post-request%no-body (without-body)
   ())
 
-(defclass patch-request (with-body)
+(defclass patch-request%no-body (without-body)
   ())
 
 (defun %method->object (method)
@@ -41,8 +44,18 @@
     (:POST%NO-BODY :POST)
     (otherwise method)))
 
+(defun find-object (key)
+  "Looks in *objects* for an object stored under KEY, if exists returns it, if not creates 
+stores under key and returns it."
+  (let ((found? (getf *objects* key)))
+    (if found?
+        found?
+        (setf (getf *objects* key)
+              (make-instance (%method->object key))))))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defmacro args-to-let (args params way &body body)
+    "Convert the list ARGS into a let form and then evaluate post-process-body. "
     `(let ,(mapcar (lambda (arg)
                      `(,arg
                        (quri.decode:url-decode
@@ -52,6 +65,8 @@
        (locally (post-process-body (locally ,@body) ,way ,params))))
 
   (defun extract-args-from-url (url)
+    "Given a URL with keys like \":<some type>\" extract these and return them with the #\: 
+removed"
     (let ((split (str:split #\/ url :omit-nulls t)))
       (loop :for str :in split
             :when (char= (aref str 0) #\:)
@@ -59,14 +74,15 @@
 
   (defmacro defapi (app (method url requires-auth-p)
                     (params json post-process-way
-                     &key (parse-type 'hash-table))
+                     &key (parse-type 'hash-table)
+                       bearer-verifier-args)
                     &body body)
     (let ((args (extract-args-from-url url)))
       (alexandria:with-gensyms (obj)
         `(setf (ningle:route ,app ,url :method ,(method-transfomer method))
                (lambda (,params)
                  (handler-case
-                     (let ((,obj (make-instance ',(%method->object method))))
+                     (let ((,obj (find-object ,method)))
                        (set-response-headers ningle:*response*)
                        (verify-parameters ,params)
                        ,(if json 
@@ -74,7 +90,8 @@
                                      (jojo:parse
                                       (babel:octets-to-string 
                                        (verify-api-request ,obj ningle:*request*
-                                                           ,requires-auth-p))
+                                                           ,requires-auth-p
+                                                           ,bearer-verifier-args))
                                       :as :hash-table)))
                                (when ,json
                                  (unless (typep ,json ',parse-type)
@@ -97,52 +114,58 @@
                           (params post-process-way
                            &key (parse-type 'hash-table)) &body body)
   `(defapi ,app (,method ,url ,requires-auth-p) (,params nil ,post-process-way)
-       ,@body))
+     ,@body))
 
 (defmacro def-auth-api%get (app (url params post-process-way
-                                 &key (parse-type 'hash-table)) &body body)
+                                 &key (parse-type 'hash-table)
+                                   bearer-verifier-args) &body body)
   `(defapi%no-json ,app (:GET ,url t) (,params ,post-process-way)
      ,@body))
 
 (defmacro def-no-auth-api%get (app (url params post-process-way
-                                    &key (parse-type 'hash-table)) &body body)
+                                    &key (parse-type 'hash-table)
+                                      bearer-verifier-args) &body body)
   `(defapi%no-json ,app (:GET ,url nil) (,params ,post-process-way)
      ,@body))
 
 (defmacro def-auth-api%post (app (url params json post-process-way
-                                  &key (parse-type 'hash-table)) &body body)
+                                  &key (parse-type 'hash-table)
+                                    bearer-verifier-args) &body body)
   `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way)
-       ,@body))
+     ,@body))
 
 (defmacro def-no-auth-api%post (app (url params json post-process-way
-                                     &key (parse-type 'hash-table)) &body body)
+                                     &key (parse-type 'hash-table)
+                                       bearer-verifier-args) &body body)
   `(defapi ,app (:POST ,url nil) (,params ,json ,post-process-way)
-       ,@body))
+     ,@body))
 
 (defmacro def-auth-api%delete (app (url params post-process-way
-                                    &key (parse-type 'hash-table)) &body body)
+                                    &key (parse-type 'hash-table)
+                                      bearer-verifier-args) &body body)
   `(defapi%no-json ,app (:DELETE ,url t) (,params ,post-process-way)
      ,@body))
 
-(defgeneric verify-api-request (request-obj ningle-request requires-auth))
+(defgeneric verify-api-request (request-obj ningle-request requires-auth bearer-args))
 
-(defmethod verify-api-request ((obj with-body) req (req-auth t))
+(defmethod verify-api-request ((obj with-body) req (req-auth t) bearer-args)
   (validate-bearer req)
-  (check-authorization req)
+  (check-authorization req bearer-args)
   (let ((raw-body (%request-raw-body req)))
     (validate-crc req raw-body)
     raw-body))
 
-(defmethod verify-api-request ((obj with-body) req (req-auth null))
+(defmethod verify-api-request ((obj with-body) req (req-auth null) bearer-args)
+  (declare (ignore bearer-args))
   (let ((raw-body (%request-raw-body req)))
     (validate-crc req raw-body)
     raw-body))
 
-(defmethod verify-api-request ((obj without-body) req (req-auth t))
+(defmethod verify-api-request ((obj without-body) req (req-auth t) bearer-args)
   (validate-bearer req)
-  (check-authorization req))
+  (check-authorization req bearer-args))
 
-(defmethod verify-api-request ((obj without-body) req (req-auth null))
+(defmethod verify-api-request ((obj without-body) req (req-auth null) bearer-args)
   t)
 
 (defun check-valid-crc (crc raw-body)
@@ -161,14 +184,14 @@ the CRC provided."
   (or (req-header "authorization" request)
       (error 'no-bearer-token)))
 
-(defun check-authorization (request)
+(defun check-authorization (request bearer-args)
   "For the default authorized-requests, we extract the bearer token from the headers, 
 the existence of this header was validated before hand. If the token is not found then 
 'bad-bearer is signalled. If the token has expired then 'bad-bearer is signalled. "
   (let* ((bearer (req-header "authorization" request))
          (token (second (str:split #\Space bearer)))
          (found? (find-bearer-token token)))
-    (validate-bearer-token found?)))
+    (validate-bearer-token found? bearer-args)))
 
 (defun set-response-headers (response)
   (setf (lack.response:response-headers response)

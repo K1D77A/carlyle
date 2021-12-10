@@ -4,7 +4,7 @@
   :description "A framework for constructing a REST based backend."
   :author "K1D77A"
   :license  "MIT"
-  :version "0.0.1"
+  :version "0.0.2"
   :depends-on (#:str
                #:clack
                #:ningle
