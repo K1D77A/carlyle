@@ -44,6 +44,10 @@
   ((description
     :initform "The JSON sent does not match the JSON required..")))
 
+(define-condition malformed-params (bad-request)
+  ((description
+    :initform "The PARAMS sent do not match the applicable params..")))
+
 (define-condition unknown-argument (bad-request)
   ((description
     :initform "Unable to determine the types of arguments provided.")))

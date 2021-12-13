@@ -101,7 +101,8 @@ removed"
                                     `(post-process-body (locally ,@body) ,post-process-way
                                                         ,params)))
                             `(progn
-                               (verify-api-request ,obj ningle:*request* ,requires-auth-p)
+                               (verify-api-request ,obj ningle:*request* ,requires-auth-p
+                                                   ,bearer-verifier-args)
                                ,(if args
                                     `(args-to-let ,args ,params ,post-process-way ,@body)
                                     `(post-process-body (locally ,@body)
@@ -112,38 +113,57 @@ removed"
 
 (defmacro defapi%no-json (app (method url requires-auth-p)
                           (params post-process-way
-                           &key (parse-type 'hash-table)) &body body)
-  `(defapi ,app (,method ,url ,requires-auth-p) (,params nil ,post-process-way)
+                           &key (parse-type 'hash-table)
+                             bearer-verifier-args) &body body)
+  `(defapi ,app (,method ,url ,requires-auth-p) (,params nil ,post-process-way
+                                                 :parse-type ,parse-type
+                                                 :bearer-verifier-args
+                                                 ,bearer-verifier-args)
      ,@body))
 
 (defmacro def-auth-api%get (app (url params post-process-way
                                  &key (parse-type 'hash-table)
                                    bearer-verifier-args) &body body)
-  `(defapi%no-json ,app (:GET ,url t) (,params ,post-process-way)
+  `(defapi%no-json ,app (:GET ,url t) (,params ,post-process-way
+                                       :parse-type ,parse-type
+                                       :bearer-verifier-args
+                                       ,bearer-verifier-args)
      ,@body))
 
 (defmacro def-no-auth-api%get (app (url params post-process-way
                                     &key (parse-type 'hash-table)
                                       bearer-verifier-args) &body body)
-  `(defapi%no-json ,app (:GET ,url nil) (,params ,post-process-way)
+  `(defapi%no-json ,app (:GET ,url nil) (,params ,post-process-way
+                                         :parse-type ,parse-type
+                                         :bearer-verifier-args
+                                         ,bearer-verifier-args)
      ,@body))
 
 (defmacro def-auth-api%post (app (url params json post-process-way
                                   &key (parse-type 'hash-table)
                                     bearer-verifier-args) &body body)
-  `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way)
+  `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way
+                                :parse-type ,parse-type
+                                :bearer-verifier-args
+                                ,bearer-verifier-args)
      ,@body))
 
 (defmacro def-no-auth-api%post (app (url params json post-process-way
                                      &key (parse-type 'hash-table)
                                        bearer-verifier-args) &body body)
-  `(defapi ,app (:POST ,url nil) (,params ,json ,post-process-way)
+  `(defapi ,app (:POST ,url nil) (,params ,json ,post-process-way
+                                  :parse-type ,parse-type
+                                  :bearer-verifier-args
+                                  ,bearer-verifier-args)
      ,@body))
 
 (defmacro def-auth-api%delete (app (url params post-process-way
                                     &key (parse-type 'hash-table)
                                       bearer-verifier-args) &body body)
-  `(defapi%no-json ,app (:DELETE ,url t) (,params ,post-process-way)
+  `(defapi%no-json ,app (:DELETE ,url t) (,params ,post-process-way
+                                          :parse-type ,parse-type
+                                          :bearer-verifier-args
+                                          ,bearer-verifier-args)
      ,@body))
 
 (defgeneric verify-api-request (request-obj ningle-request requires-auth bearer-args))

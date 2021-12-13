@@ -18,6 +18,8 @@
 
    #:malformed-json
 
+   #:malformed-params
+
    #:unknown-argument
 
    #:missing-crc
@@ -85,7 +87,9 @@
    ;;carlyle.lisp
    #:carlyle-app
 
-   #:safe-destructure-keys))
+   #:safe-destructure-keys
+
+   #:safe-destructure-params))
    
 
    
