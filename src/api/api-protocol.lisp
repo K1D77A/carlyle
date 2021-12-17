@@ -210,7 +210,7 @@ the existence of this header was validated before hand. If the token is not foun
 'bad-bearer is signalled. If the token has expired then 'bad-bearer is signalled. "
   (let* ((bearer (req-header "authorization" request))
          (token (second (str:split #\Space bearer)))
-         (found? (find-bearer-token token)))
+         (found? (find-bearer-token token bearer-args)))
     (validate-bearer-token found? bearer-args)))
 
 (defun set-response-headers (response)
