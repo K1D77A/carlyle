@@ -75,6 +75,9 @@
    #:def-no-auth-api%post
    #:def-auth-api%delete
 
+   #:defapi%raw
+   #:def-auth-api%post-raw
+
    #:verify-api-request
 
    #:process-condition
