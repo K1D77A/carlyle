@@ -75,7 +75,7 @@ removed"
   (defmacro defapi (app (method url requires-auth-p)
                     (params json post-process-way
                      &key bearer-verifier-args
-                       (parser #'to-hash-table))
+                       (parser 'to-hash-table))
                     &body body)
     (let ((args (extract-args-from-url url)))
       (alexandria:with-gensyms (obj)
@@ -87,7 +87,7 @@ removed"
                        (verify-parameters ,params)
                        ,(if json 
                             `(let ((,json
-                                     (funcall ,parser 
+                                     (funcall ',parser 
                                               (verify-api-request ,obj ningle:*request*
                                                                   ,requires-auth-p
                                                                   ,bearer-verifier-args))))
@@ -120,7 +120,7 @@ removed"
                        &key bearer-verifier-args)
                       &body body)
   `(defapi ,app (,method ,url ,requires-auth-p) (,params ,raw-body ,post-process-way
-                                                 :parser #'to-raw
+                                                 :parser to-raw
                                                  :bearer-verifier-args
                                                  ,bearer-verifier-args)
      ,@body))
@@ -129,15 +129,15 @@ removed"
                                       &key bearer-verifier-args)
                                  &body body)
   `(defapi ,app (:POST ,url t) (,params ,raw-body ,post-process-way
-                                        :parser #'to-raw
-                                        :bearer-verifier-args
-                                        ,bearer-verifier-args)
+                                :parser to-raw
+                                :bearer-verifier-args
+                                ,bearer-verifier-args)
      ,@body))
 
 
 (defmacro defapi%no-json (app (method url requires-auth-p)
                           (params post-process-way
-                           &key (parser #'to-hash-table)
+                           &key (parser 'to-hash-table)
                              bearer-verifier-args) &body body)
   `(defapi ,app (,method ,url ,requires-auth-p) (,params nil ,post-process-way
                                                  :parser ,parser
@@ -146,7 +146,7 @@ removed"
      ,@body))
 
 (defmacro def-auth-api%get (app (url params post-process-way
-                                 &key (parser #'to-hash-table)
+                                 &key (parser 'to-hash-table)
                                    bearer-verifier-args) &body body)
   `(defapi%no-json ,app (:GET ,url t) (,params ,post-process-way
                                        :parser ,parser
@@ -155,7 +155,7 @@ removed"
      ,@body))
 
 (defmacro def-no-auth-api%get (app (url params post-process-way
-                                    &key (parser #'to-hash-table)
+                                    &key (parser 'to-hash-table)
                                       bearer-verifier-args) &body body)
   `(defapi%no-json ,app (:GET ,url nil) (,params ,post-process-way
                                          :parser ,parser
@@ -164,7 +164,7 @@ removed"
      ,@body))
 
 (defmacro def-auth-api%post (app (url params json post-process-way
-                                  &key (parser #'to-hash-table)
+                                  &key (parser 'to-hash-table)
                                     bearer-verifier-args) &body body)
   `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way
                                 :parser ,parser
@@ -173,7 +173,7 @@ removed"
      ,@body))
 
 (defmacro def-no-auth-api%post (app (url params json post-process-way
-                                     &key (parser #'to-hash-table)
+                                     &key (parser 'to-hash-table)
                                        bearer-verifier-args) &body body)
   `(defapi ,app (:POST ,url nil) (,params ,json ,post-process-way
                                   :parser ,parser
@@ -182,7 +182,7 @@ removed"
      ,@body))
 
 (defmacro def-auth-api%delete (app (url params post-process-way
-                                    &key (parser #'to-hash-table)
+                                    &key (parser 'to-hash-table)
                                       bearer-verifier-args) &body body)
   `(defapi%no-json ,app (:DELETE ,url t) (,params ,post-process-way
                                           :parser ,parser

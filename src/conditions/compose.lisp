@@ -24,6 +24,10 @@
   (declare (ignore args))
   `(("low" . "Reauthorize")))
 
+(defmethod compose-condition/recover append ((condition no-bearer-token) request &rest args)
+  (declare (ignore args))
+  `(("high" . "Request a new token")))
+
 (defmethod compose-condition/recover append ((condition bad-bearer) request &rest args)
   (declare (ignore args))
   `(("high" . "Request a new token")))
