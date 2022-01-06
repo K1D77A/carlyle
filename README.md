@@ -36,12 +36,17 @@ macros for defining API's.
 
 ```lisp
 defapi%no-json
+defapi%raw 
+def-auth-api%post-raw
 def-auth-api%get
 def-no-auth-api%get
 def-auth-api%post
 def-no-auth-api%post
 def-auth-api%delete
 ```
+
+You can change how the json body is parsed by changing the single argument function provided as the key :parser, this function should process the raw body from the request.
+
 ### Validation
 API's that dont have a body like those defined which are get and delete requests do not 
 include a CRC header, those with a json body include a CRC header, this is verified 
