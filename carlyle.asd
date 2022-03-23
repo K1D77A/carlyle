@@ -29,4 +29,20 @@
                (:module "api"
                 :serial t
                 :components ((:file "api-protocol")))
-               (:file "carlyle")))
+               (:file "carlyle")
+               (:module "v2"
+                :serial t
+                :components ((:file "package")
+                             (:file "encryption")
+                             (:file "bearers")
+                             (:module "conditions"
+                              :serial t
+                              :components ((:file "conditions")
+                                           (:file "condition-protocol")
+                                           (:file "compose")))
+                             (:module "api"
+                              :serial t
+                              :components ((:file "protocol")
+                                           (:file "definer")))
+                             (:file "carlyle")))))
+
