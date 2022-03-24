@@ -36,14 +36,9 @@ each of these KEYS has to have a non nil value otherwise signals 'malformed-json
   (declare (ignore content-type content-length raw-body))
   nil)
 
+;; (defapi *app* :cake-dog (message-api) (:v1 :post "/:cake/:dog")
+;;     (:requires-auth t :contains-body t)
+;;   (format nil "~A/~A/~A" (cake api) (dog api)
+;;           (body api)))
 
-(defparameter *app* (make-instance 'ningle:<app>))
-
-(defclass my-api ()
-  ())
-
-(defapi *app* cake-dog (my-api) (:v1 :post "/:cake/:dog")
-    (:requires-auth t :contains-body t)
-  (format nil "~A/~A/~A" (cake process) (dog process)
-          (body process)))
-
+v 

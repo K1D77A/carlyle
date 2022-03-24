@@ -9,11 +9,13 @@ This file contains the code to define user facing API's.
                      (contains-body t))
                   &body body)
   "documentation"
+  (unless (keywordp name)
+    (error "Name must be a keyword"))
   (let ((params-args (extract-args-from-url path)))
     (flet ((make-name (method)
-             (intern (string-upcase (format nil "~A%~A" name method)))))
-      `(progn (defclass ,(make-name "process")
-                  ,(append superclasses (list 'process-object))
+             (intern (string-upcase (format nil "~{~A~^-~}%~A" superclasses method)))))
+      `(progn (defclass ,(make-name "api")
+                  ,(append superclasses (list 'api-object))
                 ,(mapcar (lambda (arg)
                            (list arg
                                  :initform nil
@@ -21,92 +23,93 @@ This file contains the code to define user facing API's.
                   (extract-args-from-url path)))
               (defmethod
                   ,(make-name "body")
-                  ((method (eql ,method)) version process)
+                  (api name (method (eql ,method)) version)
                 ,(if body
                      `(locally ,@body)
-                     `(%body ,method ,version process)))
+                     `(%body api ,name ,method ,version)))
               (defmethod
                   ,(make-name "authentication")
-                  ((method (eql ,method)) version process)
+                  (api name (method (eql ,method)) version)
                 ,(if requires-auth 
-                     `(%authentication ,method ,version process)
+                     `(%authentication api ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "request-validation")
-                  ((method (eql ,method))
-                   version process)
+                  (api name (method (eql ,method))
+                   version)
                 ,(if contains-body 
-                     `(%request-validation ,method ,version process)
+                     `(%request-validation api ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "content-parser")
-                  ((method (eql ,method)) version process)
+                  (api name (method (eql ,method)) version)
                 ,(if contains-body 
-                     `(%content-parser ,method ,version process)
+                     `(%content-parser api ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "content-validation")
-                  ((method (eql ,method)) version process)
+                  (api name (method (eql ,method)) version)
                 ,(if contains-body 
-                     `(%content-validation ,method ,version process)
+                     `(%content-validation api ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "condition-handler")
-                  (condition (method (eql ,method)) version process)
-                (%condition-handler condition ,method ,version process))
+                  (condition api name (method (eql ,method)) version)
+                (%condition-handler condition api ,name ,method ,version))
               (defmethod
                   ,(make-name "condition-recorder")
-                  (condition (method (eql ,method)) version process)
-                (%record-condition condition ,method ,version process))
+                  (condition api name (method (eql ,method)) version)
+                (%record-condition condition api ,name
+                                   ,method ,version))
               (defmethod
                   ,(make-name "parse-params")
-                  ((method (eql ,method)) version process)
+                  (api name (method (eql ,method)) version)
                 ,(if params-args 
-                     `(%parse-params ',params-args ,version ,method process)
+                     `(%parse-params api ,name
+                                     ',params-args ,version ,method)
                      t))
               (defmethod
                   ,(make-name "post-process-body")
-                  ((method (eql ,method)) version process result)
+                  (api name (method (eql ,method)) version result)
                 ,(if contains-body
-                     `(%post-process-body ,method ,version process result)
+                     `(%post-process-body api ,name ,method ,version result)
                      t))
               (defmethod
                   ,(make-name "append-headers")
-                  ((method (eql ,method)) version process)
-                (%append-headers ,method ,version process))
+                  (api name (method (eql ,method)) version)
+                (%append-headers api ,name ,method ,version))
               (setf (ningle:route ,app ,(format nil "/~A~A"
                                                 (string-downcase version)
                                                 path)
                                   :method ,method)
                     (lambda (params)
-                      (let ((process (make-instance ',(make-name "process")
-                                                    :params params
-                                                    :request ningle:*request*
-                                                    :response ningle:*response*
-                                                    :path ,path)))
+                      (let ((api (make-instance ',(make-name "api")
+                                                :params params
+                                                :request ningle:*request*
+                                                :response ningle:*response*
+                                                :path ,path)))
                         (handler-case
                             (progn 
                               (funcall ',(make-name "append-headers")
-                                       ,method ,version process)
+                                       api ,name ,method ,version)
                               (funcall ',(make-name "authentication")
-                                       ,method ,version process)
+                                       api ,name ,method ,version)
                               (funcall ',(make-name "parse-params")
-                                       ,method ,version process)
+                                       api ,name  ,method ,version)
                               (funcall ',(make-name "content-parser")
-                                       ,method ,version process)
+                                       api ,name ,method ,version )
                               (funcall ',(make-name "content-validation")
-                                       ,method ,version process)
+                                       api ,name ,method ,version)
                               (funcall ',(make-name "post-process-body")
-                                       ,method ,version process 
+                                       api ,name  ,method ,version 
                                        (funcall ',(make-name "body")
-                                                ,method ,version process)))
+                                                api ,name ,method ,version)))
                           (condition (c)
                             (handler-case 
                                 (funcall ',(make-name "condition-recorder")
-                                         c ,method ,version process)
+                                         c api ,name ,method ,version)
                               (condition (con)
                                 (setf c con)))
                             (funcall ',(make-name "condition-handler")
-                                     c ,method ,version
-                                     process))))))))))
+                                     c api ,name ,method ,version))))))))))
 

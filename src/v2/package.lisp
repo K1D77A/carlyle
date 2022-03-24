@@ -2,6 +2,8 @@
 
 (defpackage #:carlyle/v2
   (:use #:cl)
+  (:import-from :hu.dwim.defclass-star
+                #:defclass*)
   (:export ;;conditions.lisp
    #:caryle-condition
    
@@ -43,46 +45,30 @@
 
    #:compose-condition/recover
 
-   ;;json
-   #:post-process-json
+   ;;api protocol
+   #:%append-headers
 
-   ;;bearer
-   #:find-bearer-token
+   #:%authentication
 
-   #:validate-bearer-token
-   ;;api-protocol
-   #:request
+   #:%find-bearer-token
 
-   #:with-body
+   #:%validate-bearer-token
 
-   #:without-body
+   #:%content-parser
 
-   #:delete-request
+   #:%content-validation
 
-   #:get-request
+   #:%condition-handler
 
-   #:put-request
+   #:%record-condition
 
-   #:post-request
+   #:%parse-params
 
-   #:patch-request
+   #:%body
 
-   #:defapi
-   #:defapi%no-json
-   #:def-auth-api%get
-   #:def-no-auth-api%get
-   #:def-auth-api%post
-   #:def-no-auth-api%post
-   #:def-auth-api%delete
+   #:%post-process-body
 
-   #:defapi%raw
-   #:def-auth-api%post-raw
-
-   #:verify-api-request
-
-   #:process-condition
-
-   #:verify-param
+   #:%request-validation
 
    ;;encryption.lisp
    #:crc32

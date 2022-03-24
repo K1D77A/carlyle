@@ -1,152 +1,147 @@
 (in-package #:carlyle/v2)
 
-(defclass process-object ()
+(defclass* api-object ()
   ((params
     :accessor params
-    :initarg :params
     :initform nil
     :type (or null list))
    (request
     :accessor request
-    :initarg :request
     :type lack.request:request)
    (response
     :accessor response
-    :initarg :response
     :type lack.response:response)
    (body
-    :accessor body
-    :initarg :body
-    :initform nil)
+    nil 
+    :accessor body)
    (raw-body
     :accessor raw-body
-    :initarg :raw-body
-    :initform nil
     :type (or null (array (unsigned-byte 8))))
    (path
     :accessor path
-    :initarg :path
-    :type (or string pathname))))
+    :type (or string pathname)))
+  (:export-accessor-names-p t)
+  (:export-class-name-p t))
 
-(defgeneric %append-headers (method version process)
+(defgeneric %append-headers (api name method version)
   (:documentation "The fallback method for appending the correct headers to a request."))
 
-(defmethod %append-headers (method version process)
+(defmethod %append-headers (api name method version)
   (with-accessors ((response response))
-      process 
+      api 
     (setf (lack.response:response-headers response)
           (append (lack.response:response-headers response)
                   (list :content-type "application/json")))))
 
 
-(defgeneric %authentication (method version process)
+(defgeneric %authentication (api name method version)
   (:documentation
    "The fallback method for validating the authentication provided by the request.
 Calls both %find-bearer-token and %validate-bearer-token"))
 
-(defmethod %authentication (method version process)
+(defmethod %authentication (api name method version)
   "By default extract the authorization header, extract the token then call 
-#'find-bearer-token with the method version process and the extracted token, 
-then call #'%validate-bearer-token with method version process and the token."
+#'find-bearer-token with the method version api and the extracted token, 
+then call #'%validate-bearer-token with method version api and the token."
   (with-accessors ((request request))
-      process 
+      api 
     (let* ((bearer (req-header "authorization" request))
            (token (second (str:split #\Space bearer)))
-           (token? (%find-bearer-token method version process token)))
-      (%validate-bearer-token method version process token?))))
+           (token? (%find-bearer-token api name method version token)))
+      (%validate-bearer-token api name method version token?))))
 
-(defgeneric %find-bearer-token (method version process token)
+(defgeneric %find-bearer-token (api name method version token)
   (:documentation "Specialize me to find and validate a bearer token."))
 
-(defmethod %find-bearer-token (method version process (token null))
+(defmethod %find-bearer-token (api name method version (token null))
   "If TOKEN is null then signal 'no-bearer-token"
   (error 'no-bearer-token))
 
-(defgeneric %validate-bearer-token (method version process obj)
+(defgeneric %validate-bearer-token (api name method version obj)
   (:documentation "This generic is used to make sure that the token received is valid."))
 
-(defmethod %validate-bearer-token (method version process obj)
+(defmethod %validate-bearer-token (api name method version obj)
   "By default signal 'bad-bearer"
   (error 'bad-bearer))
 
 
 
-(defgeneric %content-parser (method version process)
+(defgeneric %content-parser (api name method version)
   (:documentation "The default generic for parsing the body of requests."))
 
-(defmethod %content-parser (method version process)
+(defmethod %content-parser (api name method version)
   "By default attempt to get the raw-body and then parse it as a hash-table and set the 
-(body process) to that hash-table. Calls %content-validation with the raw body."
+(body api) to that hash-table. Calls %content-validation with the raw body."
   (with-accessors ((body body)
                    (raw-body raw-body)
                    (request request))
-      process
+      api
     (let ((raw (%request-raw-body request)))
       (when raw
-        (%content-validation method version process)
+        (%content-validation api name method version)
         (setf raw-body raw
               body (jojo:parse (babel:octets-to-string raw) :as :hash-table))))))
 
-(defgeneric %content-validation (method version process)
+(defgeneric %content-validation (api name method version)
   (:documentation "The default generic for making sure that the body received is valid.
 This uses CRC."))
 
-(defmethod %content-validation (method version process)
+(defmethod %content-validation (api name method version)
   "The default method CRC's the raw body to make sure that it is valid."
   (with-accessors ((raw-body raw-body)
                    (request request))
-      process
+      api
     (when raw-body
       (validate-crc request raw-body))))
 
 
 
-(defgeneric %condition-handler (condition method version process)
+(defgeneric %condition-handler (condition api name method version)
   (:documentation "The fallback generic for handling conditions."))
 
-(defmethod %condition-handler (condition method version process)
-  "The default method for handling conditions calls process-condition."
+(defmethod %condition-handler (condition api name method version)
+  "The default method for handling conditions calls api-condition."
   (with-accessors ((request request)
                    (response response))
-      process
-    (process-condition condition method version process request response)))
+      api
+    (process-condition condition api name method version request response)))
 
-(defgeneric %record-condition (condition method version process)
+(defgeneric %record-condition (condition api name method version)
   (:documentation "The default means of recording a condition. Doesn't do anything."))
 
-(defmethod %record-condition (condition method version process)
+(defmethod %record-condition (condition api name method version)
   nil)
 
 
-(defgeneric %parse-params (params-list method version process))
+(defgeneric %parse-params (api name params-list method version))
 
-(defmethod %parse-params (params-list method version process)
+(defmethod %parse-params (api name params-list method version)
   (with-accessors ((params params))
-      process
+      api
     (dolist (arg params-list)
-      (setf (slot-value process arg)
+      (setf (slot-value api arg)
             (quri.decode:url-decode (cdr (assoc arg params :test #'string-equal)))))))
 
-(defgeneric %body (method version process))
+(defgeneric %body (api name method version))
 
-(defmethod %body :around (method version process)
+(defmethod %body :around (api name method version)
   (jojo:to-json (call-next-method)))
 
-(defmethod %body (method version process)
+(defmethod %body (api name method version)
   "")
 
-(defgeneric %post-process-body (method version process result)
-  (:documentation "After body is finished use this to process the final evaluation into 
+(defgeneric %post-process-body (api name method version result)
+  (:documentation "After body is finished use this to api the final evaluation into 
 JSON. WAY is the means of doing this."))
 
-(defmethod %post-process-body :around (method version process result)
+(defmethod %post-process-body :around (api name method version result)
   (let* ((res (call-next-method)))
     (setf (lack.response:response-headers ningle:*response*)
           (append (lack.response:response-headers ningle:*response*)
                   (list :crc (crc32 (babel:string-to-octets res)))))
     res))
 
-(defmethod %request-validation (method version process)
+(defmethod %request-validation (api name method version)
   t)
 
 (defun to-hash-table (octets)  
@@ -168,20 +163,23 @@ the CRC provided."
   (or (req-header "authorization" request)
       (error 'no-bearer-token)))
 
-(defgeneric process-condition (condition method version process request response))
+(defgeneric process-condition (condition api name method version request response))
 
-(defmethod process-condition :around (condition method version process  request response)
+(defmethod process-condition :around (condition api name
+                                      method version request response)
   (setf (lack.response:response-status response) 500)
   (call-next-method))
 
-(defmethod process-condition (condition method version process  request response)
+(defmethod process-condition (condition api name method version  request response)
   (compose-condition (make-condition 'api-condition :description (type-of condition))
-                     method version process request response))
+                     api name 
+                     method version request response))
 
-(defmethod process-condition ((condition api-condition) method version process
+(defmethod process-condition ((condition api-condition)
+                              api name method version
                               request response)
   (setf (lack.response:response-status response) (http-status-code condition))
-  (compose-condition condition method version process request response))
+  (compose-condition condition api name method version request response))
 
 
 

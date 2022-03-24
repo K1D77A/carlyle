@@ -29,17 +29,17 @@ recover: {
           alist)
     hashtable))
 
-(defgeneric compose-condition (condition method version process request response)
+(defgeneric compose-condition (condition api name method version request response)
   (:documentation "Composes a condition into a JSON object that is sent back to the user."))
 
-(defgeneric compose-condition/error (condition method version process request response)
+(defgeneric compose-condition/error (condition api name method version  request response)
   (:documentation "Compose the error aspects of the condition.")
   (:method-combination append :most-specific-last))
 
 
 
 (defmethod compose-condition/error :around 
-    (condition method version process request response)
+    (condition api name method version request response)
   (with-accessors ((http-status-code http-status-code))
       condition
     (setf (lack.response:response-status ningle:*response*)
@@ -48,11 +48,12 @@ recover: {
      (handler-case 
          (call-next-method)
        (condition ()
-         (compose-condition/error (make-instance 'total-failure) method version process
+         (compose-condition/error (make-instance 'total-failure)
+                                  api name method version 
                                   request response))))))
 
 (defmethod compose-condition/error append
-    (condition method version process request response)
+    (condition api name method version request response)
   (with-accessors ((http-status-code http-status-code)
                    (category category))
       condition
@@ -61,49 +62,51 @@ recover: {
 
 
 (defgeneric compose-condition/info 
-    (condition method version process request response)
+    (condition api name method version request response)
   (:documentation "Compose the info aspects of the condition using the APPEND method.")
   (:method-combination append :most-specific-first))
 
 (defmethod compose-condition/info :around
-    (condition method version process request response)
+    (condition api name method version request response)
   (%compose-quick-hash
    (handler-case 
        (call-next-method)
      (condition ()
-       (compose-condition/info (make-instance 'total-failure) method version process
+       (compose-condition/info (make-instance 'total-failure)
+                               api name method version 
                                request response)))))
 
 (defmethod compose-condition/info append 
-    (condition method version process request response)
+    (condition api name method version request response)
   `(("description" . ,(description condition))))
 
 
 (defgeneric compose-condition/recover
-    (condition method version process request response)
+    (condition api name method version request response)
   (:documentation "Compose the recover aspects of the condition using the APPEND method.")
   (:method-combination append :most-specific-first))
 
 (defmethod compose-condition/recover :around
-    (condition method version process request response)
+    (condition api name method version request response)
   (%compose-quick-hash
    (handler-case
        (call-next-method)
      (condition ()
-       (compose-condition/recover (make-instance 'total-failure) method version process
+       (compose-condition/recover (make-instance 'total-failure)
+                                  api name method version 
                                   request response)))))
 
 (defmethod compose-condition/recover append
-    ((condition api-condition) method version process request response)
+    ((condition api-condition) api name method version request response)
   nil)
 
 (defmethod compose-condition/recover append
-    ((c total-failure) method version process request response)
+    ((c total-failure) api name method version request response)
   `(("high" . "Report error to an administrator")))
 
 
 
-(defmethod compose-condition :around (condition method version process request response)
+(defmethod compose-condition :around (condition api name method version  request response)
   "By default wrap around the call and afterwards convert it to json using jojo:to-json 
 and then crc it and append that as a header."
   (let* ((res (jojo:to-json (call-next-method))))
@@ -112,12 +115,12 @@ and then crc it and append that as a header."
                   (list :crc (crc32 (babel:string-to-octets res)))))
     res))
 
-(defmethod compose-condition (condition method version process request response)
+(defmethod compose-condition (condition api name method version request response)
   (%compose-quick-hash
    `(("error" . ,(compose-condition/error
-                  condition method version process request response))
+                  condition api name  method version request response))
      ("info" . ,(compose-condition/info
-                 condition method version process request response))
+                 condition api name method version request response))
      ("recover" . ,(compose-condition/recover
-                    condition method version process request response)))
+                    condition api name method version request response)))
    :test #'equal :size 3))
