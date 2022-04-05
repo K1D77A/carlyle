@@ -70,6 +70,11 @@
 
    #:%request-validation
 
+   #:%verify-parameter
+
+   ;;definer
+   #:defapi
+
    ;;encryption.lisp
    #:crc32
 

@@ -29,7 +29,7 @@ recover: {
           alist)
     hashtable))
 
-(defgeneric componse-condition (condition request &rest args)
+(defgeneric compose-condition (condition request &rest args)
   (:documentation "Composes a condition into a JSON object that is sent back to the user."))
 
 (defmethod compose-condition :around (condition request &rest args)

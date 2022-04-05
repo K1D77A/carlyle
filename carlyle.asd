@@ -11,6 +11,7 @@
                #:cl-json
                #:jonathan
                #:closer-mop
+               #:hu.dwim.defclass-star
                #:ironclad
                #:local-time)
   :serial t

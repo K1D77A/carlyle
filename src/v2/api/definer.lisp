@@ -6,7 +6,8 @@ This file contains the code to define user facing API's.
 
 (defmacro defapi (app name superclasses (version method path)
                   (&key (requires-auth t)
-                     (contains-body t))
+                     (contains-body t)
+                     (api-var api))
                   &body body)
   "documentation"
   (unless (keywordp name)
@@ -22,94 +23,94 @@ This file contains the code to define user facing API's.
                                  :reader arg))
                   (extract-args-from-url path)))
               (defmethod
-                  ,(make-name "body")
-                  (api name (method (eql ,method)) version)
+                  ,(intern (string-upcase (format nil "pay%~A" (make-name "body"))))
+                  (,api-var name (method (eql ,method)) version)
                 ,(if body
                      `(locally ,@body)
-                     `(%body api ,name ,method ,version)))
+                     `(%body ,api-var ,name ,method ,version)))
               (defmethod
                   ,(make-name "authentication")
-                  (api name (method (eql ,method)) version)
+                  (,api-var name (method (eql ,method)) version)
                 ,(if requires-auth 
-                     `(%authentication api ,name ,method ,version)
+                     `(%authentication ,api-var ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "request-validation")
-                  (api name (method (eql ,method))
+                  (,api-var name (method (eql ,method))
                    version)
                 ,(if contains-body 
-                     `(%request-validation api ,name ,method ,version)
+                     `(%request-validation ,api-var ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "content-parser")
-                  (api name (method (eql ,method)) version)
+                  (,api-var name (method (eql ,method)) version)
                 ,(if contains-body 
-                     `(%content-parser api ,name ,method ,version)
+                     `(%content-parser ,api-var ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "content-validation")
-                  (api name (method (eql ,method)) version)
+                  (,api-var name (method (eql ,method)) version)
                 ,(if contains-body 
-                     `(%content-validation api ,name ,method ,version)
+                     `(%content-validation ,api-var ,name ,method ,version)
                      t))
               (defmethod
                   ,(make-name "condition-handler")
-                  (condition api name (method (eql ,method)) version)
-                (%condition-handler condition api ,name ,method ,version))
+                  (condition ,api-var name (method (eql ,method)) version)
+                (%condition-handler condition ,api-var ,name ,method ,version))
               (defmethod
                   ,(make-name "condition-recorder")
-                  (condition api name (method (eql ,method)) version)
-                (%record-condition condition api ,name
+                  (condition ,api-var name (method (eql ,method)) version)
+                (%record-condition condition ,api-var ,name
                                    ,method ,version))
               (defmethod
                   ,(make-name "parse-params")
-                  (api name (method (eql ,method)) version)
+                  (,api-var name (method (eql ,method)) version)
                 ,(if params-args 
-                     `(%parse-params api ,name
+                     `(%parse-params ,api-var ,name
                                      ',params-args ,version ,method)
                      t))
               (defmethod
                   ,(make-name "post-process-body")
-                  (api name (method (eql ,method)) version result)
-                ,(if contains-body
-                     `(%post-process-body api ,name ,method ,version result)
-                     t))
+                  (,api-var name (method (eql ,method)) version result)
+                (%post-process-body ,api-var ,name ,method ,version result))
               (defmethod
                   ,(make-name "append-headers")
-                  (api name (method (eql ,method)) version)
-                (%append-headers api ,name ,method ,version))
+                  (,api-var name (method (eql ,method)) version)
+                (%append-headers ,api-var ,name ,method ,version))
               (setf (ningle:route ,app ,(format nil "/~A~A"
                                                 (string-downcase version)
                                                 path)
                                   :method ,method)
                     (lambda (params)
-                      (let ((api (make-instance ',(make-name "api")
-                                                :params params
-                                                :request ningle:*request*
-                                                :response ningle:*response*
-                                                :path ,path)))
+                      (let ((,api-var (make-instance ',(make-name "api")
+                                                     :params params
+                                                     :request ningle:*request*
+                                                     :response ningle:*response*
+                                                     :path ,path)))
                         (handler-case
                             (progn 
                               (funcall ',(make-name "append-headers")
-                                       api ,name ,method ,version)
+                                       ,api-var ,name ,method ,version)
                               (funcall ',(make-name "authentication")
-                                       api ,name ,method ,version)
+                                       ,api-var ,name ,method ,version)
                               (funcall ',(make-name "parse-params")
-                                       api ,name  ,method ,version)
+                                       ,api-var ,name  ,method ,version)
                               (funcall ',(make-name "content-parser")
-                                       api ,name ,method ,version )
+                                       ,api-var ,name ,method ,version )
                               (funcall ',(make-name "content-validation")
-                                       api ,name ,method ,version)
+                                       ,api-var ,name ,method ,version)
                               (funcall ',(make-name "post-process-body")
-                                       api ,name  ,method ,version 
-                                       (funcall ',(make-name "body")
-                                                api ,name ,method ,version)))
+                                       ,api-var ,name  ,method ,version 
+                                       (funcall ',(intern (string-upcase
+                                                           (format nil "pay%~A"
+                                                                   (make-name "body"))))
+                                                ,api-var ,name ,method ,version)))
                           (condition (c)
                             (handler-case 
                                 (funcall ',(make-name "condition-recorder")
-                                         c api ,name ,method ,version)
+                                         c ,api-var ,name ,method ,version)
                               (condition (con)
                                 (setf c con)))
                             (funcall ',(make-name "condition-handler")
-                                     c api ,name ,method ,version))))))))))
+                                     c ,api-var ,name ,method ,version))))))))))
 

@@ -119,8 +119,20 @@ This uses CRC."))
   (with-accessors ((params params))
       api
     (dolist (arg params-list)
-      (setf (slot-value api arg)
-            (quri.decode:url-decode (cdr (assoc arg params :test #'string-equal)))))))
+      (let ((parsed (quri.decode:url-decode (cdr (assoc arg params :test #'string-equal)))))
+        (%verify-parameter api name method version arg parsed)
+        (setf (slot-value api arg) parsed)))))
+
+(defgeneric %verify-parameter (api name method version key val))
+
+(defmethod %verify-parameter :around (api name method version key val)
+  (or (call-next-method)
+      (error 'unknown-argument)))
+
+(defmethod %verify-parameter (api name method version key (val null))
+  nil)
+
+
 
 (defgeneric %body (api name method version))
 
@@ -140,6 +152,9 @@ JSON. WAY is the means of doing this."))
           (append (lack.response:response-headers ningle:*response*)
                   (list :crc (crc32 (babel:string-to-octets res)))))
     res))
+
+(defmethod %post-process-body (api name method version result)
+  (jojo:to-json result))
 
 (defmethod %request-validation (api name method version)
   t)
