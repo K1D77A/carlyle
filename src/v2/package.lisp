@@ -14,6 +14,8 @@
 
    #:rate-limited
 
+   #:missing-path-arg
+
    #:not-found
 
    #:bad-request

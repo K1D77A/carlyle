@@ -91,10 +91,9 @@ This uses CRC."))
   (with-accessors ((raw-body raw-body)
                    (request request))
       api
-    (when raw-body
+    (when (and (slot-boundp api 'raw-body)
+               raw-body)
       (validate-crc request raw-body))))
-
-
 
 (defgeneric %condition-handler (condition api name method version)
   (:documentation "The fallback generic for handling conditions."))
@@ -118,10 +117,15 @@ This uses CRC."))
 (defmethod %parse-params (api name params-list method version)
   (with-accessors ((params params))
       api
+    (print params)
     (dolist (arg params-list)
-      (let ((parsed (quri.decode:url-decode (cdr (assoc arg params :test #'string-equal)))))
-        (%verify-parameter api name method version arg parsed)
-        (setf (slot-value api arg) parsed)))))
+      (print arg)
+      (let ((extracted  (cdr (assoc arg params :test #'string-equal))))
+        (unless extracted
+          (error 'missing-path-arg))
+        (let ((parsed (quri.decode:url-decode extracted)))
+          (%verify-parameter api name method version arg parsed)
+          (setf (slot-value api arg) parsed))))))
 
 (defgeneric %verify-parameter (api name method version key val))
 
@@ -130,6 +134,9 @@ This uses CRC."))
       (error 'unknown-argument)))
 
 (defmethod %verify-parameter (api name method version key (val null))
+  nil)
+
+(defmethod %verify-parameter (api name method version key val)
   nil)
 
 
@@ -195,6 +202,7 @@ the CRC provided."
                               request response)
   (setf (lack.response:response-status response) (http-status-code condition))
   (compose-condition condition api name method version request response))
+
 
 
 

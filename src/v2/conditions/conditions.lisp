@@ -64,6 +64,10 @@
   ((description
     :initform "CRC header is missing. Make sure its uppercase.")))
 
+(define-condition missing-path-arg (bad-request)
+  ((description
+    :initform "Path argument is missing. Please amend this issue.")))
+
 (define-condition no-bearer-token (bad-request)
   ((description
     :initform "Bearer token is missing for a request that requires authorization.")))
