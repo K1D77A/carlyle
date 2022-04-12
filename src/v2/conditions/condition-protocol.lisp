@@ -88,6 +88,10 @@ recover: {
     ((condition unknown-argument) api name method version request response)
   `(("argument" . ,(argument condition))))
 
+(defmethod compose-condition/info append 
+    ((condition not-implemented) api name method version request response)
+  `(("feature" . ,(feature condition))))
+
 
 (defgeneric compose-condition/recover
     (condition api name method version request response)

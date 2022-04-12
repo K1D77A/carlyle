@@ -5,6 +5,10 @@
   `(("low" . "Resend request.")))
 
 (defmethod compose-condition/recover append
+    ((condition not-implemented) api name method version request response)
+  `(("high" . "Stop requests.")))
+
+(defmethod compose-condition/recover append
     ((condition bad-crc) api name method version request response)
   `(("high" . "Fix CRC calculator.")))
 

@@ -21,6 +21,9 @@
 
    #:bad-request
 
+   #:not-implemented
+   #:feature
+
    #:malformed-json
 
    #:malformed-params
@@ -78,6 +81,8 @@
 
    ;;definer
    #:defapi
+   #:defapi-group
+   #:api
 
    ;;encryption.lisp
    #:crc32

@@ -25,6 +25,18 @@
          obj
        (format stream "~D. ~A. ~A" http-status-code category description)))))
 
+(define-condition not-implemented (api-condition)
+  ((http-status-code
+    :initform 501)
+   (category
+    :initform "NOT-IMPLEMENTED")
+   (description
+    :initform "The feature you have requested has not been implemented.")
+   (feature
+    :accessor feature
+    :initarg :feature
+    :initform nil)))
+
 (define-condition total-failure (api-condition)
   ((http-status-code
     :initform 500)
