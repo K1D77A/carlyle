@@ -5,7 +5,7 @@
   (:import-from :hu.dwim.defclass-star
                 #:defclass*)
   (:export ;;conditions.lisp
-   #:caryle-condition
+   #:carlyle-condition
    
    #:api-condition
    #:http-status-code
@@ -15,6 +15,7 @@
    #:rate-limited
 
    #:missing-path-arg
+   #:expected
 
    #:not-found
 
@@ -25,6 +26,7 @@
    #:malformed-params
 
    #:unknown-argument
+   #:argument
 
    #:missing-crc
 

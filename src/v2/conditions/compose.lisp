@@ -14,7 +14,7 @@
 
 (defmethod compose-condition/recover append
     ((condition missing-path-arg)  api name method version request response)
-  `(("high" . "Please add the path arg that is missing.")))
+  `(("high" . ,(format nil "Please append the ~A arg to the URL." (expected condition)))))
 
 (defmethod compose-condition/recover append
     ((condition no-bearer-token) api name method version request response)

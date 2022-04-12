@@ -29,7 +29,7 @@ recover: {
           alist)
     hashtable))
 
-(defgeneric compose-condition (condition api name method version request response)
+(defgeneric compose-condition (way condition api name method version request response)
   (:documentation "Composes a condition into a JSON object that is sent back to the user."))
 
 (defgeneric compose-condition/error (condition api name method version  request response)
@@ -80,6 +80,14 @@ recover: {
     (condition api name method version request response)
   `(("description" . ,(description condition))))
 
+(defmethod compose-condition/info append 
+    ((condition missing-path-arg) api name method version request response)
+  `(("missing-arg" . ,(expected condition))))
+
+(defmethod compose-condition/info append 
+    ((condition unknown-argument) api name method version request response)
+  `(("argument" . ,(argument condition))))
+
 
 (defgeneric compose-condition/recover
     (condition api name method version request response)
@@ -106,7 +114,8 @@ recover: {
 
 
 
-(defmethod compose-condition :around (condition api name method version  request response)
+(defmethod compose-condition :around ((way (eql :json)) condition api name
+                                      method version  request response)
   "By default wrap around the call and afterwards convert it to json using jojo:to-json 
 and then crc it and append that as a header."
   (let* ((res (jojo:to-json (call-next-method))))
@@ -115,7 +124,8 @@ and then crc it and append that as a header."
                   (list :crc (crc32 (babel:string-to-octets res)))))
     res))
 
-(defmethod compose-condition (condition api name method version request response)
+(defmethod compose-condition ((way (eql :json))
+                              condition api name method version request response)
   (%compose-quick-hash
    `(("error" . ,(compose-condition/error
                   condition api name  method version request response))
@@ -124,3 +134,15 @@ and then crc it and append that as a header."
      ("recover" . ,(compose-condition/recover
                     condition api name method version request response)))
    :test #'equal :size 3))
+
+(defmethod compose-condition ((way (eql :list))
+                              condition api name method version request response)
+  `(("error" . ,(alexandria:hash-table-alist
+                 (compose-condition/error
+                  condition api name  method version request response)))
+    ("info" . ,(alexandria:hash-table-alist 
+                (compose-condition/info
+                 condition api name method version request response)))
+    ("recover" . ,(alexandria:hash-table-alist
+                   (compose-condition/recover
+                    condition api name method version request response)))))

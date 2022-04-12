@@ -16,7 +16,14 @@
    (description
     :reader description
     :initarg :description
-    :initform "Internal server failure.")))
+    :initform "Internal server failure."))
+  (:report
+   (lambda (obj stream)
+     (with-accessors ((http-status-code http-status-code)
+                      (category category)
+                      (description description))
+         obj
+       (format stream "~D. ~A. ~A" http-status-code category description)))))
 
 (define-condition total-failure (api-condition)
   ((http-status-code
@@ -58,7 +65,11 @@
 
 (define-condition unknown-argument (bad-request)
   ((description
-    :initform "Unable to determine the types of arguments provided.")))
+    :initform "Unable to determine the types of arguments provided.")
+   (argument
+    :accessor argument
+    :initarg :argument
+    :initform nil)))
 
 (define-condition missing-crc (bad-request)
   ((description
@@ -66,7 +77,11 @@
 
 (define-condition missing-path-arg (bad-request)
   ((description
-    :initform "Path argument is missing. Please amend this issue.")))
+    :initform "Path argument is missing. Please amend this issue.")
+   (expected
+    :accessor expected
+    :initform nil
+    :initarg :expected)))
 
 (define-condition no-bearer-token (bad-request)
   ((description

@@ -7,6 +7,7 @@
   :version "0.0.2"
   :depends-on (#:str
                #:clack
+               #:alexandria
                #:ningle
                #:cl-json
                #:jonathan

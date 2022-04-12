@@ -15,7 +15,8 @@ This file contains the code to define user facing API's.
   (let ((params-args (extract-args-from-url path)))
     (flet ((make-name (method)
              (intern (string-upcase (format nil "~{~A~^-~}%~A" superclasses method)))))
-      `(progn (defclass ,(make-name "api")
+      `(progn (defclass ,(intern (string-upcase (format nil "~A%~A" name
+                                                        (make-name "api"))))
                   ,(append superclasses (list 'api-object))
                 ,(mapcar (lambda (arg)
                            (list arg
@@ -23,7 +24,7 @@ This file contains the code to define user facing API's.
                                  :reader arg))
                   (extract-args-from-url path)))
               (defmethod
-                  ,(intern (string-upcase (format nil "pay%~A" (make-name "body"))))
+                  ,(intern (string-upcase (format nil "~A%~A" name (make-name "body"))))
                   (,api-var name (method (eql ,method)) version)
                 ,(if body
                      `(locally ,@body)
@@ -82,11 +83,13 @@ This file contains the code to define user facing API's.
                                                 path)
                                   :method ,method)
                     (lambda (params)
-                      (let ((,api-var (make-instance ',(make-name "api")
-                                                     :params params
-                                                     :request ningle:*request*
-                                                     :response ningle:*response*
-                                                     :path ,path)))
+                      (let ((,api-var (make-instance
+                                       ',(intern (string-upcase (format nil "~A%~A" name
+                                                                        (make-name "api"))))
+                                       :params params
+                                       :request ningle:*request*
+                                       :response ningle:*response*
+                                       :path ,path)))
                         (handler-case
                             (progn 
                               (funcall ',(make-name "append-headers")
@@ -101,9 +104,10 @@ This file contains the code to define user facing API's.
                                        ,api-var ,name ,method ,version)
                               (funcall ',(make-name "post-process-body")
                                        ,api-var ,name  ,method ,version 
-                                       (funcall ',(intern (string-upcase
-                                                           (format nil "pay%~A"
-                                                                   (make-name "body"))))
+                                       (funcall ',(intern
+                                                   (string-upcase
+                                                    (format nil "~A%~A" name
+                                                            (make-name "body"))))
                                                 ,api-var ,name ,method ,version)))
                           (condition (c)
                             (handler-case 

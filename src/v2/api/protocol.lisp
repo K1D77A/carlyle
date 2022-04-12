@@ -33,7 +33,6 @@
           (append (lack.response:response-headers response)
                   (list :content-type "application/json")))))
 
-
 (defgeneric %authentication (api name method version)
   (:documentation
    "The fallback method for validating the authentication provided by the request.
@@ -122,7 +121,7 @@ This uses CRC."))
       (print arg)
       (let ((extracted  (cdr (assoc arg params :test #'string-equal))))
         (unless extracted
-          (error 'missing-path-arg))
+          (error 'missing-path-arg :expected arg))
         (let ((parsed (quri.decode:url-decode extracted)))
           (%verify-parameter api name method version arg parsed)
           (setf (slot-value api arg) parsed))))))
@@ -131,7 +130,7 @@ This uses CRC."))
 
 (defmethod %verify-parameter :around (api name method version key val)
   (or (call-next-method)
-      (error 'unknown-argument)))
+      (error 'unknown-argument :argument (string key))))
 
 (defmethod %verify-parameter (api name method version key (val null))
   nil)
@@ -193,7 +192,7 @@ the CRC provided."
   (call-next-method))
 
 (defmethod process-condition (condition api name method version  request response)
-  (compose-condition (make-condition 'api-condition :description (type-of condition))
+  (compose-condition :json (make-condition 'api-condition :description (type-of condition))
                      api name 
                      method version request response))
 
@@ -201,10 +200,7 @@ the CRC provided."
                               api name method version
                               request response)
   (setf (lack.response:response-status response) (http-status-code condition))
-  (compose-condition condition api name method version request response))
-
-
-
+  (compose-condition :json condition api name method version request response))
 
 (defun verify-parameters (params)
   (mapc (lambda (alist)
