@@ -87,12 +87,13 @@ This uses CRC."))
 
 (defmethod %content-validation (api name method version)
   "The default method CRC's the raw body to make sure that it is valid."
-  (with-accessors ((raw-body raw-body)
-                   (request request))
-      api
-    (when (and (slot-boundp api 'raw-body)
-               raw-body)
-      (validate-crc request raw-body))))
+  t)
+;; (with-accessors ((raw-body raw-body)
+;;                  (request request))
+;;     api
+;;   (when (and (slot-boundp api 'raw-body)
+;;              raw-body)
+;;     (validate-crc request raw-body)))
 
 (defgeneric %condition-handler (condition api name method version)
   (:documentation "The fallback generic for handling conditions."))
@@ -116,9 +117,7 @@ This uses CRC."))
 (defmethod %parse-params (api name params-list method version)
   (with-accessors ((params params))
       api
-    (print params)
     (dolist (arg params-list)
-      (print arg)
       (let ((extracted  (cdr (assoc arg params :test #'string-equal))))
         (unless extracted
           (error 'missing-path-arg :expected arg))

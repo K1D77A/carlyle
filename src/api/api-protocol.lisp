@@ -163,14 +163,23 @@ removed"
                                          ,bearer-verifier-args)
      ,@body))
 
+(defmacro def-no-auth-api%delete (app (url params post-process-way
+                                       &key (parser 'to-hash-table)
+                                         bearer-verifier-args) &body body)
+  `(defapi%no-json ,app (:DELETE ,url nil) (,params ,post-process-way
+                                            :parser ,parser
+                                            :bearer-verifier-args
+                                            ,bearer-verifier-args)
+     ,@body))
+
 (defmacro def-auth-api%post (app (url params json post-process-way
                                   &key (parser 'to-hash-table)
                                     bearer-verifier-args) &body body)
   `(defapi ,app (:POST ,url t) (,params ,json ,post-process-way
-                                :parser ,parser
-                                :bearer-verifier-args
-                                ,bearer-verifier-args)
-     ,@body))
+                                        :parser ,parser
+                                        :bearer-verifier-args
+                                        ,bearer-verifier-args)
+       ,@body))
 
 (defmacro def-no-auth-api%post (app (url params json post-process-way
                                      &key (parser 'to-hash-table)
@@ -196,13 +205,11 @@ removed"
   (validate-bearer req)
   (check-authorization req bearer-args)
   (let ((raw-body (%request-raw-body req)))
-    (validate-crc req raw-body)
     raw-body))
 
 (defmethod verify-api-request ((obj with-body) req (req-auth null) bearer-args)
   (declare (ignore bearer-args))
   (let ((raw-body (%request-raw-body req)))
-    (validate-crc req raw-body)
     raw-body))
 
 (defmethod verify-api-request ((obj without-body) req (req-auth t) bearer-args)

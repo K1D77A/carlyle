@@ -24,6 +24,8 @@
    #:not-implemented
    #:feature
 
+   #:total-failure
+
    #:malformed-json
 
    #:malformed-params

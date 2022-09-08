@@ -167,10 +167,7 @@ This file contains the code to define user facing API's.
                                          ,api-var ,name ,method ,version)
                                 (funcall ',(make-name "post-process-body")
                                          ,api-var ,name  ,method ,version 
-                                         (funcall ',(intern
-                                                     (string-upcase
-                                                      (format nil "~A%~A" name
-                                                              (make-name "body"))))
+                                         (funcall ',(make-name "body")
                                                   ,api-var ,name ,method ,version)))
                             (condition (c)
                               (handler-case 

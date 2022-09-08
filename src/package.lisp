@@ -74,6 +74,7 @@
    #:def-auth-api%post
    #:def-no-auth-api%post
    #:def-auth-api%delete
+   #:def-no-auth-api%delete
 
    #:defapi%raw
    #:def-auth-api%post-raw
