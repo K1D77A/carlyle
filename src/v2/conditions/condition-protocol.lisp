@@ -36,8 +36,6 @@ recover: {
   (:documentation "Compose the error aspects of the condition.")
   (:method-combination append :most-specific-last))
 
-
-
 (defmethod compose-condition/error :around 
     (condition api name method version request response)
   (with-accessors ((http-status-code http-status-code))
@@ -119,20 +117,20 @@ recover: {
 
 
 (defmethod compose-condition :around ((way (eql :json)) condition api name
-                                      method version  request response)
+                                      method version request response)
   "By default wrap around the call and afterwards convert it to json using jojo:to-json 
 and then crc it and append that as a header."
-  (let* ((res (jojo:to-json (call-next-method))))
-    (setf (lack.response:response-headers ningle:*response*)
-          (append (lack.response:response-headers ningle:*response*)
-                  (list :crc (crc32 (babel:string-to-octets res)))))
-    res))
+   (let* ((res (jojo:to-json  (call-next-method))))
+     (setf (lack.response:response-headers ningle:*response*)
+           (append (lack.response:response-headers ningle:*response*)
+                   (list :crc (crc32 (babel:string-to-octets res)))))
+     res))
 
 (defmethod compose-condition ((way (eql :json))
                               condition api name method version request response)
   (%compose-quick-hash
    `(("error" . ,(compose-condition/error
-                  condition api name  method version request response))
+                  condition api name method version request response))
      ("info" . ,(compose-condition/info
                  condition api name method version request response))
      ("recover" . ,(compose-condition/recover

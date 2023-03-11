@@ -29,9 +29,9 @@ This file contains the code to define user facing API's.
            (%content-parser api name method version)))
        (defgeneric
            ,(make-name "content-validation")
-           (api name method version)
-         (:method (api name method version)
-           (%content-validation api name method version)))
+           (api name method version raw)
+         (:method (api name method version raw)
+           (%content-validation api name method version raw)))
        (defgeneric
            ,(make-name "condition-handler")
            (condition api name method version)
@@ -106,14 +106,7 @@ This file contains the code to define user facing API's.
                      version)
                   ,(if contains-body 
                        `(%content-parser ,api-var ,name ,method ,version)
-                       t))
-                (defmethod
-                    ,(make-name "content-validation")
-                    ((,api-var ,class-name) (name (eql ,name)) (method (eql ,method))
-                     version)
-                  ,(if contains-body 
-                       `(%content-validation ,api-var ,name ,method ,version)
-                       t))
+                       t))            
                 (defmethod
                     ,(make-name "condition-handler")
                     (condition (,api-var ,class-name) (name (eql ,name))
@@ -163,8 +156,6 @@ This file contains the code to define user facing API's.
                                          ,api-var ,name  ,method ,version)
                                 (funcall ',(make-name "content-parser")
                                          ,api-var ,name ,method ,version )
-                                (funcall ',(make-name "content-validation")
-                                         ,api-var ,name ,method ,version)
                                 (funcall ',(make-name "post-process-body")
                                          ,api-var ,name  ,method ,version 
                                          (funcall ',(make-name "body")

@@ -14,6 +14,8 @@
    (body
     nil 
     :accessor body)
+   (anything 
+    :accessor anything)
    (raw-body
     :accessor raw-body
     :type (or null (array (unsigned-byte 8))))
@@ -77,23 +79,15 @@ then call #'%validate-bearer-token with method version api and the token."
       api
     (let ((raw (%request-raw-body request)))
       (when raw
-        (%content-validation api name method version)
+        (%content-validation api name method version raw)
         (setf raw-body raw
-              body (jojo:parse (babel:octets-to-string raw) :as :hash-table))))))
+              body (shasht:read-json (babel:octets-to-string raw)))))))
 
-(defgeneric %content-validation (api name method version)
+(defgeneric %content-validation (api name method version raw)
   (:documentation "The default generic for making sure that the body received is valid.
-This uses CRC."))
-
-(defmethod %content-validation (api name method version)
-  "The default method CRC's the raw body to make sure that it is valid."
-  t)
-;; (with-accessors ((raw-body raw-body)
-;;                  (request request))
-;;     api
-;;   (when (and (slot-boundp api 'raw-body)
-;;              raw-body)
-;;     (validate-crc request raw-body)))
+This uses CRC.")
+  (:method (api name method version raw)
+    t))
 
 (defgeneric %condition-handler (condition api name method version)
   (:documentation "The fallback generic for handling conditions."))

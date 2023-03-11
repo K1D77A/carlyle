@@ -39,6 +39,8 @@
 
    #:expired-bearer-token
 
+   #:anything
+
    #:no-bearer-token
 
    #:forbidden

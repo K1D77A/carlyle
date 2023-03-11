@@ -4,13 +4,14 @@
   :description "A framework for constructing a REST based backend."
   :author "K1D77A"
   :license  "MIT"
-  :version "0.0.2"
+  :version "0.0.3"
   :depends-on (#:str
                #:clack
                #:alexandria
                #:ningle
                #:cl-json
                #:jonathan
+               #:shasht
                #:closer-mop
                #:hu.dwim.defclass-star
                #:ironclad
