@@ -15,7 +15,9 @@
     nil 
     :accessor body)
    (anything 
-    :accessor anything)
+    :accessor anything
+    :initform ()
+    :documentation "key val plist for random values")
    (raw-body
     :accessor raw-body
     :type (or null (array (unsigned-byte 8))))
