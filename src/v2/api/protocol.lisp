@@ -218,8 +218,7 @@ the CRC provided."
 (defun %request-raw-body (request)
   (let ((len (lack.request:request-content-length request)))
     (when (and (numberp len)
-               (plusp len)
-               (not (zerop len)))
+               (plusp len))
       (let ((raw (lack.request:request-raw-body request)))
         (when raw 
           (let ((seq (make-array len :element-type '(unsigned-byte 8))))
