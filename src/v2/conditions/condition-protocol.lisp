@@ -19,6 +19,9 @@ recover: {
 
 ||#
 
+
+;;;this whole thing needs to be refactored to use shasht/user chosen json library.
+
 (defun %compose-quick-hash (alist &rest rest &key &allow-other-keys)
   "Takes in an alist and quickly generators a hash"
   (let ((hashtable (apply #'make-hash-table (nconc rest (list :test #'equal)))))

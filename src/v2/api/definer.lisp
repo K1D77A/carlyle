@@ -61,7 +61,7 @@ This file contains the code to define user facing API's.
 (defmacro defapi (app name superclasses (version method path)
                   (&key (requires-auth t)
                      (contains-body t)
-                     (api-var api))
+                     (api-var 'api))
                   &body body)
   "documentation"
   (unless (keywordp name)
@@ -80,12 +80,11 @@ This file contains the code to define user facing API's.
                                    :reader arg))
                     (extract-args-from-url path)))
                 (defmethod
-                    ,(make-name "body")
-                    ((,api-var ,class-name) (name (eql ,name)) (method (eql ,method))
+                    ,(make-name "around-execution")
+                    (function (,api-var ,class-name)
+                     (name (eql ,name)) (method (eql ,method))
                      version)
-                  ,(if body
-                       `(locally ,@body)
-                       `(%body ,api-var ,name ,method ,version)))
+                  (%around-execution function ,api-var ,name ,method ,version))
                 (defmethod
                     ,(make-name "authentication")
                     ((,api-var ,class-name) (name (eql ,name)) (method (eql ,method))
@@ -146,26 +145,29 @@ This file contains the code to define user facing API's.
                                                        :request ningle:*request*
                                                        :response ningle:*response*
                                                        :path ,path)))
-                          (handler-case
-                              (progn 
-                                (funcall ',(make-name "append-headers")
-                                         ,api-var ,name ,method ,version)
-                                (funcall ',(make-name "authentication")
-                                         ,api-var ,name ,method ,version)
-                                (funcall ',(make-name "parse-params")
-                                         ,api-var ,name  ,method ,version)
-                                (funcall ',(make-name "content-parser")
-                                         ,api-var ,name ,method ,version )
-                                (funcall ',(make-name "post-process-body")
-                                         ,api-var ,name  ,method ,version 
-                                         (funcall ',(make-name "body")
-                                                  ,api-var ,name ,method ,version)))
-                            (condition (c)
-                              (handler-case 
-                                  (funcall ',(make-name "condition-recorder")
-                                           c ,api-var ,name ,method ,version)
-                                (condition (con)
-                                  (setf c con)))
-                              (funcall ',(make-name "condition-handler")
-                                       c ,api-var ,name ,method ,version)))))))))))
+                          (let ((fun;need gensym
+                                  (lambda ()
+                                    (handler-case
+                                        (progn 
+                                          (funcall ',(make-name "append-headers")
+                                                   ,api-var ,name ,method ,version)
+                                          (funcall ',(make-name "authentication")
+                                                   ,api-var ,name ,method ,version)
+                                          (funcall ',(make-name "parse-params")
+                                                   ,api-var ,name  ,method ,version)
+                                          (funcall ',(make-name "content-parser")
+                                                   ,api-var ,name ,method ,version )
+                                            (funcall ',(make-name "post-process-body")
+                                                     ,api-var ,name  ,method ,version 
+                                                     (locally ,@body)))
+                                      (condition (c)
+                                        (handler-case 
+                                            (funcall ',(make-name "condition-recorder")
+                                                     c ,api-var ,name ,method ,version)
+                                          (condition (con)
+                                            (setf c con)))
+                                        (funcall ',(make-name "condition-handler")
+                                                 c ,api-var ,name ,method ,version))))))
+                            (funcall ',(make-name "around-execution") fun
+                                     ,api-var ,name ,method ,version))))))))))
 

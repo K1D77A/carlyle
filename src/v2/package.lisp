@@ -75,7 +75,7 @@
 
    #:%parse-params
 
-   #:%body
+   #:%around-execution
 
    #:%post-process-body
 

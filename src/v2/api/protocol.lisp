@@ -79,6 +79,7 @@ then call #'%validate-bearer-token with method version api and the token."
                    (raw-body raw-body)
                    (request request))
       api
+    ;;need a way to constrain the body size.
     (let ((raw (%request-raw-body request)))
       (when raw
         (%content-validation api name method version raw)
@@ -135,27 +136,24 @@ This uses CRC.")
 
 
 
-(defgeneric %body (api name method version))
-
-(defmethod %body :around (api name method version)
-  (jojo:to-json (call-next-method)))
-
-(defmethod %body (api name method version)
-  "")
+(defgeneric %around-execution (function api name method version)
+  (:documentation "Specialize :around methods for this so you can perform actions around
+the execution of the request.")
+  (:method (function api name method version)
+    (funcall function)))
 
 (defgeneric %post-process-body (api name method version result)
   (:documentation "After body is finished use this to api the final evaluation into 
-JSON. WAY is the means of doing this."))
+JSON. WAY is the means of doing this.")
+  (:method :around (api name method version result)
+    (let* ((res (call-next-method)))
+      (setf (lack.response:response-headers ningle:*response*)
+            (append (lack.response:response-headers ningle:*response*)
+                    (list :crc (crc32 (babel:string-to-octets res)))))
+      res))
+  (:method (api name method version result)
+    result))
 
-(defmethod %post-process-body :around (api name method version result)
-  (let* ((res (call-next-method)))
-    (setf (lack.response:response-headers ningle:*response*)
-          (append (lack.response:response-headers ningle:*response*)
-                  (list :crc (crc32 (babel:string-to-octets res)))))
-    res))
-
-(defmethod %post-process-body (api name method version result)
-  (jojo:to-json result))
 
 (defmethod %request-validation (api name method version)
   t)
@@ -224,4 +222,3 @@ the CRC provided."
           (let ((seq (make-array len :element-type '(unsigned-byte 8))))
             (read-sequence seq raw)
             seq))))))
-
