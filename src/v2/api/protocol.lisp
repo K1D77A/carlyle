@@ -58,14 +58,22 @@ then call #'%validate-bearer-token with method version api and the token."
 
 (defmethod %find-bearer-token (api name method version (token null))
   "If TOKEN is null then signal 'no-bearer-token"
-  (error 'no-bearer-token))
+  (%signal-no-bearer api name method version token))
+
+(defgeneric %signal-no-bearer (api name method version token)
+  (:method (api name method version token)
+    (error 'no-bearer-token)))
 
 (defgeneric %validate-bearer-token (api name method version obj)
   (:documentation "This generic is used to make sure that the token received is valid."))
 
 (defmethod %validate-bearer-token (api name method version obj)
   "By default signal 'bad-bearer"
-  (error 'bad-bearer))
+  (%signal-bad-bearer api name method version token))
+
+(defgeneric %signal-bad-bearer (api name method version token)
+  (:method (api name method version token)
+    (error 'bad-bearer)))
 
 
 
@@ -109,6 +117,10 @@ This uses CRC.")
   nil)
 
 
+(defgeneric %signal-missing-path-arg (api name method version &rest args)
+  (:method (api name method version &rest args)
+    (apply #'error 'missing-path-arg args)))
+
 (defgeneric %parse-params (api name params-list method version)
   (:method (api name params-list method version)
     (with-accessors ((params params))
@@ -116,18 +128,21 @@ This uses CRC.")
       (dolist (arg params-list)
         (let ((extracted  (cdr (assoc arg params :test #'string-equal))))
           (unless extracted
-            (error 'missing-path-arg :expected arg))
+            (%signal-missing-path-arg api name method version :expected arg))
           (let ((parsed (quri.decode:url-decode extracted)))
             (%verify-parameter api name method version arg parsed)
             (setf (slot-value api arg) parsed)))))))
 
+(defgeneric %signal-unknown-argument (api name method version &rest args)
+  (:method (api name method version &rest args)
+    (apply #'error 'unknown-argument args)))
 
 (defgeneric %verify-parameter (api name method version key val)
   (:method :around (api name method version key val)
     (or (call-next-method)
-        (error 'unknown-argument :argument (string key))))
-  (:method (api name method version key (val null))
-    nil)
+        (%signal-unknown-argument api name method version
+                                  :argument (string key)
+                                  :value val)))
   (:method (api name method version key (val null))
     nil))
 
@@ -162,6 +177,7 @@ the CRC provided."
   (or (string= (format nil "~D" (crc32 raw-body)) crc)
       (error 'bad-crc)))
 
+
 (defun validate-crc (request raw-body)
   (let ((crc-header (req-header "crc" request)))
     (unless crc-header
@@ -180,7 +196,8 @@ the CRC provided."
   (call-next-method))
 
 (defmethod process-condition (condition api name method version  request response)
-  (compose-condition :json (make-condition 'api-condition :description (type-of condition))
+  (compose-condition :json (make-condition 'api-condition
+                                           :description (type-of condition))
                      api name 
                      method version request response))
 

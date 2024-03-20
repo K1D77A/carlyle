@@ -62,8 +62,10 @@
    #:%authentication
 
    #:%find-bearer-token
+   #:%signal-no-bearer
 
    #:%validate-bearer-token
+   #:%signal-bad-bearer
 
    #:%content-parser
 
@@ -74,6 +76,7 @@
    #:%record-condition
 
    #:%parse-params
+   #:%signal-missing-path-arg
 
    #:%around-execution
 
@@ -82,6 +85,7 @@
    #:%request-validation
 
    #:%verify-parameter
+   #:%signal-unknown-argument
 
    ;;definer
    #:defapi

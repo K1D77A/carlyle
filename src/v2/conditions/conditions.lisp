@@ -78,6 +78,10 @@
 (define-condition unknown-argument (bad-request)
   ((description
     :initform "Unable to determine the types of arguments provided.")
+   (value
+    :accessor value
+    :initarg :value
+    :type string)
    (argument
     :accessor argument
     :initarg :argument
