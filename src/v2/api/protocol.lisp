@@ -109,32 +109,27 @@ This uses CRC.")
   nil)
 
 
-(defgeneric %parse-params (api name params-list method version))
-
-(defmethod %parse-params (api name params-list method version)
-  (with-accessors ((params params))
-      api
-    (dolist (arg params-list)
-      (let ((extracted  (cdr (assoc arg params :test #'string-equal))))
-        (unless extracted
-          (error 'missing-path-arg :expected arg))
-        (let ((parsed (quri.decode:url-decode extracted)))
-          (%verify-parameter api name method version arg parsed)
-          (setf (slot-value api arg) parsed))))))
-
-(defgeneric %verify-parameter (api name method version key val))
-
-(defmethod %verify-parameter :around (api name method version key val)
-  (or (call-next-method)
-      (error 'unknown-argument :argument (string key))))
-
-(defmethod %verify-parameter (api name method version key (val null))
-  nil)
-
-(defmethod %verify-parameter (api name method version key val)
-  nil)
+(defgeneric %parse-params (api name params-list method version)
+  (:method (api name params-list method version)
+    (with-accessors ((params params))
+        api
+      (dolist (arg params-list)
+        (let ((extracted  (cdr (assoc arg params :test #'string-equal))))
+          (unless extracted
+            (error 'missing-path-arg :expected arg))
+          (let ((parsed (quri.decode:url-decode extracted)))
+            (%verify-parameter api name method version arg parsed)
+            (setf (slot-value api arg) parsed)))))))
 
 
+(defgeneric %verify-parameter (api name method version key val)
+  (:method :around (api name method version key val)
+    (or (call-next-method)
+        (error 'unknown-argument :argument (string key))))
+  (:method (api name method version key (val null))
+    nil)
+  (:method (api name method version key (val null))
+    nil))
 
 (defgeneric %around-execution (function api name method version)
   (:documentation "Specialize :around methods for this so you can perform actions around
