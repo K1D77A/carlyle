@@ -161,7 +161,7 @@ This file contains the code to define user facing API's.
                                             (funcall ',(make-name "post-process-body")
                                                      ,api-var ,name  ,method ,version 
                                                      (locally ,@body)))
-                                        (condition (c)
+                                        (serious-condition (c)
                                           (handler-case 
                                               (funcall ',(make-name "condition-recorder")
                                                        c ,api-var ,name ,method ,version)
