@@ -5,6 +5,10 @@
     :accessor params
     :initform nil
     :type (or null list))
+   (headers
+    :accessor headers
+    :initarg :headers
+    :type hash-table)
    (request
     :accessor request
     :type lack.request:request)

@@ -141,11 +141,15 @@ This file contains the code to define user facing API's.
                                                     path)
                                       :method ,method)
                         (lambda (params)
-                          (let ((,api-var (make-instance ',class-name
-                                                         :params params
-                                                         :request ningle:*request*
-                                                         :response ningle:*response*
-                                                         :path ,path)))
+                          (let ((,api-var (make-instance
+                                           ',class-name
+                                           :params params
+                                           :request ningle:*request*
+                                           :response ningle:*response*
+                                           :path ,path
+                                           :headers
+                                           (lack.request:request-headers
+                                            ningle:*request))))
                             (let ((,fun
                                     (lambda ()
                                       (handler-case
