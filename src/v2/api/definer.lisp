@@ -149,7 +149,7 @@ This file contains the code to define user facing API's.
                                            :path ,path
                                            :headers
                                            (lack.request:request-headers
-                                            ningle:*request))))
+                                            ningle:*request*))))
                             (let ((,fun
                                     (lambda ()
                                       (handler-case
